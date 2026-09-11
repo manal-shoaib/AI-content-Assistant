@@ -11,8 +11,20 @@ st.set_page_config(
 st.title("📝 AI Content Assistant")
 st.write("Generate tailored social media posts, captions, and hashtags instantly.")
 
-# Sidebar API Key input
-api_key = st.sidebar.text_input("Enter Groq API Key", type="password")
+# Retrieve secret key stored on the server
+secret_api_key = st.secrets.get("GROQ_API_KEY", "")
+
+# Optional Sidebar for users who wish to provide their own key
+with st.sidebar:
+    st.header("Settings")
+    user_api_key = st.text_input(
+        "Groq API Key (Optional)", 
+        type="password", 
+        help="Leave empty to use the built-in system key."
+    )
+
+# Determine which key to use (User Key > Server Secret Key)
+active_api_key = user_api_key if user_api_key else secret_api_key
 
 # Form inputs
 with st.form("content_form"):
@@ -40,13 +52,13 @@ with st.form("content_form"):
 
 # Logic execution
 if submit_button:
-    if not api_key:
-        st.error("Please enter your Groq API Key in the sidebar.")
+    if not active_api_key:
+        st.error("No API key found! Please configure GROQ_API_KEY in Streamlit Secrets or enter one in the sidebar.")
     elif not topic or not target_audience:
         st.warning("Please fill in both Topic and Target Audience fields.")
     else:
         try:
-            client = Groq(api_key=api_key)
+            client = Groq(api_key=active_api_key)
 
             prompt = f"""
             You are an expert social media content creator.
